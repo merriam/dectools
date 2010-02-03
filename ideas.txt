@@ -1,0 +1,233 @@
+"""
+Talk Outline:
+
+Title Slide:
+    Slides and information are available at my web site.
+    
+What is a Decorator:
+    It is a design choice to unbundle two concepts, presenting a "decorator" which
+    affects how another is called.
+    
+    It adds clarity for some relationships.
+    
+What makes a good decorator:
+    Does something easy to describe, even it is hard to do:
+        @classmethod  : Makes the decorated function callable by the class and not an instance.
+                        Used for making custom constructors/initializers:   
+                            @classmethod
+                            make_regular_polygon_shape(cls, number_of_points): ...
+        @require_admin: Require user to sign in as an administrator before continuing.
+        @register_template(url):   Make this function the template called when a url pattern is processed
+        @log:   Dump function call record and parameters into a log file
+        
+        
+Why is a decorator better:        
+    slide of @require_admin versus if statements
+    note clarity, in small type
+    note errors when looking closely
+    
+Writing a decorator
+    First, let's look a trivial decorator:
+    
+    def not_implemented(function):
+         throw NotImplemented
+    
+    print "(1)  About to compile the decorator"
+    def show_when_compiling(function):
+         print "(2)  Compiling ", function.__name__, " now"
+         return function
+    print "(1.5) compiled"
+         
+    @show_when_compiling
+    def announce(message):
+        print message
+        
+    announce("(3).  Open the store")
+    announce("(4).  Close the store")
+        
+    Walk through:
+        scripts go top to bottom, often in a special namespace
+        this decorator takes a function as an argument and returns a function as a return value.
+        let's unwrap the decorator for a moment:
+        def announce(message):
+            print message
+        announce = show_when_compiling(announce)
+        
+The "requires admin decorator"
+    This is a bit harder, a long example
+    Walk through twice... once with just colored blocks in execution order, once in lexical order
+    
+Talk about the meta inforation:
+    Decorators confuse IDEs, some other tools.  Look at angelfish.set_price.__name__()
+    Also, the docstring, the number of arguments, the location, etc.
+    This is a semantic issue; not always clear about the right answer.
+       Imagine access looking through the kwargs for a "priveledged_operation" parameter.
+    
+Rewriting with Simonyis decorator decorator
+    Show the 'right' answers on meta data
+    
+Rewriting with dectools
+    import dectools as D
+
+    def check_admin():
+         return True
+    
+    class Item:
+        ...     
+        @call_if(check_admin)
+        def set_price(self, new_price):
+             self.price = new_price
+         
+But we wanted the function information:
+    def check_admin(function, *args, **kwargs):
+        print "I trust you to call ", function.__name__
+        return True
+    
+    class Item:
+    
+        @pass_if(check_admin)
+        ...
+       
+Or for the trivial 'compiling' decorator:
+    
+    def compiling(function, *args, **kwargs):
+        print "Compiling ", function.__name__
+    
+    @pass_once_before(compiling)
+    def print_hello():
+        print "hello"
+        
+or like this
+    @make_pass_once_before_decorator
+    def compiling(function, *args, **kwargs):
+        print "Compiling ", function.__name__
+        
+    @compiling
+    def print_hello():
+        print "hello"
+        
+Here are these library of functions:
+
+    Making decorators:
+    [ call/simple_call ]_[once/if/before/after/instead]
+    
+    @make_call_once
+    def print_message(message, function, args, kwargs);
+        print message, "in", function.__name__
+    
+    @print_message('compiling')
+    def print_hello(name=""):
+         print "Hello!", name
+         
+    
+    
+    or, to make a renamed function,
+    make_.._decorator
+
+    pass_once ==> good for registering functions with frameworks
+    call_if   ==> good for access checks and verification
+    call_before  ==> good for assuring connections are up
+    pass_after ==> rewritting return values.  Swallowing exceptions
+    pass_instead ==> everything else, like logging, caching, etc.
+    
+    Not perfect.  No way to handle default or variable arguments in the decorator itself, because the
+  
+    
+Back to decorator tricks:
+    
+    
+    
+    
+Other decorator tricks:
+
+        
+r even stacking decorators:
+    @compiling
+    @check_adminins
+    def set_price....
+
+        
+    
+         
+    
+    
+    
+Things I need but do not understand:
+
+func.func_closure  is often None, but need to step through this.
+Making git do the smart things about branches
+Screen cast tool
+
+Can I used named parameters in decorators, like:
+@check_admin(level='admin')
+or 
+@check_admin(level=look_up_level('f'))
+
+
+Decorator Decorator:
+   Use sort of like this:
+   
+   @D.make_decorator
+   def print_hello(the_string, old_function, *args, **kwargs):
+       print "The String", the_string
+       ret_val = old_function(*args, **kwargs)
+       print "See, was that so hard
+       
+
+    or maybe:
+    @D.make_decorator
+    def print_hello(the_string):
+        print "The String"
+        return D.call_decorator()
+          
+    wrap(function_to_wrap=check_priviledges, make_function_signature_like=raise_price)
+        Wraps function to take only those arguments (instead *args, **kwargs), match
+        name and docstring, put old information into an array of "__wrapped__[]" 
+        somewhere.
+        
+        Property decortors
+           What are these?  Are they needed?  What are slots?  What are properties?
+    
+    State diagram of usage, e.g., like "alloc, some reallocs, then free"
+       
+Simple Decorators:
+     call_if(function)
+     call_before(function)
+     call_after(function)
+     register_after_definition(function_)
+     pass_before(function, additional_args)  // then function=fn, args=args, kwargs
+     ignore_exceptions
+     log(log_function=None)
+     long_log(log_function=None)
+     trace_line_numbers
+     enter_debugger
+     
+     class decorators
+     warn_as_pep8
+     require_pep8
+     
+More:
+    wait_until(function, retries, backoff)
+    synchronize_locks
+    
+    enfore_types
+     
+     
+Copy that code:
+     memoize, memorize
+     retry(tries, delay=3, backoff=2)
+     add_method_to_class(class)
+     count_calls
+     
+     
+Someone likes these:
+     currying
+     
+     
+     
+     
+       
+       
+
+Thi
+
