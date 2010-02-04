@@ -2,18 +2,13 @@
 
 import dectools
 
-def once(function):
-    print "Just decorated", function.__name__
-
-@dectools.call_once(once)
-def hello():
-    print "Hello"
 
 @dectools.make_call_once
 def once(function):
     """ Called only once,just as the function is decorated """
-    print "just decorated", function.__name__
-    
+    print "just decorated function/class", function.__name__    
+print "Name of function once is:", once
+
 @once
 def hello(name = "Charles"):
     print "Hello", name
@@ -56,21 +51,7 @@ m = Meeting()
 m.good_morning()
 m.meet()
 
-def add_author(function):
-    function.__author__ = "ME"
-
-@call_once(add_author)
-def think():
-    print "THINK!"
-
-def register(function, url):
-    print "In a real world, this would register", function.__name__, "to the url", url
-    
-@call_once(register("foo.html"))
-def foo():
-    print "Foo!"
-
-
+print "All Done"
 
 
 # This fails    
@@ -85,4 +66,18 @@ def foo():
             #code.co_varnames[0:3] == ("function", "args", "kwargs")
             #), "New decorator must start with function, args, kwargs parameters."
 
-            
+"""            
+        This is roughly equivalent to:
+        >>> def once_function(function):
+        ...     print "called once_function while compiling", function.__name__
+        ... 
+        >>> once_function_decorator = dectools.make_call_once(once_function)
+        >>> def hello_function():
+        ...     print "hello"
+        ... 
+        >>> new_hello_function = once_function_decorator(hello_function)
+        called once_function while compiling hello_function
+        >>> hello_function == new_hello_function
+        True
+        >>>         
+"""
