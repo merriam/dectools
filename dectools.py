@@ -68,40 +68,36 @@ def make_call_once(once_function):
     """
     # assert that function to be called takes a parameter named "function" or "klass"
     # ends with parameters name "function, *args, **kwargs"
-    _assert_function_takes_function_or_klass_parameter(once_function)
     code = once_function.__code__
     if code.co_argcount == 1:
         # call_once has no additional arguments.  It will be used like:
         #    @call_once
         #    def hello(name):  ...
-        def decorated_by_once_function(function_hello):
-            """  Decorator.  Calls function_once once and then returns 
-                 the original function.  That is, no effect except at 
-                 the decoration (compile) time. """
-            assert callable(function_hello)
-            once_function(function_hello)
-            return function_hello
+        # so we return the actual decorator.
+        decorated_by_once_function = call_once(once_function)
         mask(changed=decorated_by_once_function, look_like=once_function)
         return decorated_by_once_function
     else:
-        # call_once has extra arguments, e.g., call_once(function, message).  
-        # It will be used like:  @call_once("compiling", indention=2)
-        # So we need to return a function whose output is a decorator.
+        # The once_function has extra arguments, so
+        # it will be used like:  @call_once("compiling", indention=2)
+        # Which means call_once() is a function whose output the real decorator.
+        # So we need to return an intermediate function whose output is a decorator.
 
         def take_once_function_parameters(*once_args, **once_kwargs):
-            def decorated_by_once_function(function_hello):
-                """  Decorator.  Calls function_once once and then returns 
-                     the original function.  That is, no effect except at 
-                     the decoration (compile) time. """
-                once_function(function_hello, *once_args, **once_kwargs)
-                return function_hello
-            return decorated_by_once_function            
+            decorated_by_once_function = call_once(
+                once_function, *once_args, **once_kwargs)
+            return decorated_by_once_function
+            
         mask(changed=take_once_function_parameters, look_like=once_function)
         return take_once_function_parameters
         
 def call_once(once_function, *once_args, **once_kwargs):
-    """ This decorator takes arguments of a once_function to call and any additional
-        arguments to be passed on to that once function.
+    """ This decorator calls once_function before calling the function it decorates.
+
+        When decorating hello_function, this function returns an intermediate 
+        function that takes hello_function as its argument, calls once_function
+        with hello_function, and the once_function arguments as paraemters, and
+        then returns an unchanged hello_function.
         
         @call_once(once_function, "Compiling", indent=3)
         def hello():
@@ -112,11 +108,12 @@ def call_once(once_function, *once_args, **once_kwargs):
             print "Hello"
         once_function(hello, "Compiling", indent=3)
     """
-    # assert that function_once ends with parameters name "function, *args, **kwargs"
+    # assert that function_once ends takes a parameter named "function" or "klass",
+    # but not the args and kwargs.   
     _assert_function_takes_function_or_klass_parameter(once_function)
     def decorator_to_call_once_function(function_hello):
-        """  Decorator.  When applied (compile time), it calls function_once once and then returns 
-             the original function.  That is, no effect except at 
+        """  Decorator.  When applied (compile time), it calls function_once once and 
+             then returns the original function.  That is, no effect except at 
              the decoration (compile) time. """
         once_function(function_hello, *once_args, **once_kwargs)
         return function_hello
