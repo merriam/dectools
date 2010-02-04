@@ -125,13 +125,14 @@ def make_call_instead(instead_function):
     new decorator is used on a hello_function, the instead_function is called 
     instead of the hello_function.  The instead_function is passed the 
     hello_function and its arguments as parameters. """
-    raise NotImplemented
+    raise NotImplementedError
 
 def call_instead(instead_function, *instead_args, **instead_kwargs):
     """ This decorator decorates a hello_function so that, when hello_function would
     def call_once(once_function, *once_args, **once_kwargs):
     """
-    raise NotImplemented
+    
+    raise NotImplementedError
     
 def make_call_before(before_function):
     """ This decorator creates a decorator for before_function.  When the decorator
@@ -139,7 +140,7 @@ def make_call_before(before_function):
     hello_function and its arguments passed as parameters, and then
     the hello_function is called.
     """
-    raise NotImplemented
+    raise NotImplementedError
     
 def make_call_after(after_function):
     """ This decorator creates a decorator for after_function.  When the decorator
@@ -147,6 +148,6 @@ def make_call_after(after_function):
     after_function is called, with the hello_function and its arguments passed 
     as parameters.
     """
-    raise NotImplemented
+    raise NotImplementedError
 
 

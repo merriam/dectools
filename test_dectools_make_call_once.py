@@ -2,7 +2,7 @@
 
 import dectools
 
-#import print_buffer
+from print_buffer import print_buffer
 p = print_buffer()
 prnt = p.rint
 printed = p.rinted
