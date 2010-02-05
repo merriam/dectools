@@ -21,6 +21,17 @@ def mask(changed, look_like):
     
     
 
+
+def _assert_function_takes_function_and_arg_parameters(a_function):
+    """ assert that a function's first parameters are "function", "args", and "kwargs"
+    """
+    assert a_function.__class__ == types.FunctionType
+    code = a_function.__code__
+    assert ( code.co_argcount >= 3 and 
+             code.co_varnames[0:3] == ("function", "args", "kwargs")
+           ), "New decorator must start with parameters function, args, and kwargs."
+    
+
 def _assert_function_takes_function_or_klass_parameter(a_function):
     """ assert that a function takes a parameter named "function" 
         or "klass", but does not take *args, **kwargs like others in this toolkit. 
@@ -66,8 +77,6 @@ def make_call_once(once_function):
         hello        
         
     """
-    # assert that function to be called takes a parameter named "function" or "klass"
-    # ends with parameters name "function, *args, **kwargs"
     code = once_function.__code__
     if code.co_argcount == 1:
         # call_once has no additional arguments.  It will be used like:
@@ -108,15 +117,15 @@ def call_once(once_function, *once_args, **once_kwargs):
             print "Hello"
         once_function(hello, "Compiling", indent=3)
     """
-    # assert that function_once ends takes a parameter named "function" or "klass",
+    # assert that instead_function ends takes a parameter named "function" or "klass",
     # but not the args and kwargs.   
     _assert_function_takes_function_or_klass_parameter(once_function)
-    def decorator_to_call_once_function(function_hello):
-        """  Decorator.  When applied (compile time), it calls function_once once and 
+    def decorator_to_call_once_function(hello_function):
+        """  Decorator.  When applied (compile time), it calls once_function once and 
              then returns the original function.  That is, no effect except at 
              the decoration (compile) time. """
-        once_function(function_hello, *once_args, **once_kwargs)
-        return function_hello
+        once_function(hello_function, *once_args, **once_kwargs)
+        return hello_function
     return decorator_to_call_once_function
 
 
@@ -125,15 +134,72 @@ def make_call_instead(instead_function):
     new decorator is used on a hello_function, the instead_function is called 
     instead of the hello_function.  The instead_function is passed the 
     hello_function and its arguments as parameters. """
-    raise NotImplementedError
+    code = instead_function.__code__
+    if code.co_argcount == 1:
+        # call_once has no additional arguments.  It will be used like:
+        #    @call_once
+        #    def hello(name):  ...
+        # so we return the actual decorator.
+        decorated_by_instead_function = call_instead(instead_function)
+        mask(changed=decorated_by_instead_function, look_like=instead_function)
+        return decorated_by_instead_function
+    else:
+        # The instead_function has extra arguments, so
+        # it will be used like:  @call_once("compiling", indention=2)
+        # Which means call_once() is a function whose output the real decorator.
+        # So we need to return an intermediate function whose output is a decorator.
 
+        def take_instead_function_parameters(*instead_args, **instead_kwargs):
+            # assert not ( len(instead_args) == 1 and len(instead_kwargs) == 0
+            #    and type(instead_args[0]) == types.FunctionType),\
+            #    "You made a decorator with arguments but called it without arguments"
+            # Unfortunately, I can't use this assert.  
+            decorated_by_instead_function = call_instead(
+                instead_function, *instead_args, **instead_kwargs)
+            return decorated_by_instead_function
+            
+        mask(changed=take_instead_function_parameters, look_like=instead_function)
+        return take_instead_function_parameters
+    
+
+    
 def call_instead(instead_function, *instead_args, **instead_kwargs):
     """ This decorator decorates a hello_function so that, when hello_function would
-    def call_once(once_function, *once_args, **once_kwargs):
+    be called, the instead_function is called instead.  The instead_function is 
+    passed the hello_function and its arguments as paraemters.
+    
+    This function returns an intermediate function which returns the final 
+    hello_function replacement.
     """
-    
-    raise NotImplementedError
-    
+    _assert_function_takes_function_and_arg_parameters(instead_function)
+    def intermediate_call_instead_function(hello_function):
+        """  Decorator.  Returns a new hello_function that calls instead_function
+             instead.
+             
+             If you got a "TypeError: intermediate_call_instead_function() takes..."
+             error, you may have made a decorator with arguments, and called it without
+             arguments.  For example:
+             
+             @dectools.make_call_instead
+             def trace(function, args, kwargs, indent):  ...
+             @trace
+             def add_two(first, second):..
+             add_two(1,2)
+             TypeError: intermediate_call_instead_function() takes exactly 1 argument (2 given)
+
+        """
+        def hello_decorated_by_call_instead(*hello_args, **hello_kwargs):
+            """ Call the instead function. """
+            return instead_function(hello_function, hello_args, hello_kwargs,
+                                    *instead_args, **instead_kwargs)
+        new_hello_function = mask(changed=hello_decorated_by_call_instead, 
+                                  look_like=hello_function)
+        return new_hello_function
+    return intermediate_call_instead_function
+
+
+
+        
 def make_call_before(before_function):
     """ This decorator creates a decorator for before_function.  When the decorator
     is used on a hello_function, the before_function is called, with the 
