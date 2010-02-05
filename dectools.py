@@ -4,6 +4,9 @@
 
 import types
 
+class _Sentinal_Parameter: pass
+# A handy parameter passed internally to keep down accidental misuse
+
 def mask(changed, look_like):
     """ Make the changed function have the same name as the look_like function.
     TODO:  copy over the signature, defaults, etc.
@@ -42,66 +45,9 @@ def _assert_function_takes_function_or_klass_parameter(a_function):
              and (code.co_argcount == 1 or code.co_varnames[1] != "args")
            ), "New decorator must start with parameter function or klass, but not " \
               "parameters args or kwargs."
-    
 
-def make_call_once(once_function):
-    """ This decorator takes a once_function and returns a new decorator.  When this
-        new decorator is used to decorate a hello_functIon, the once_function is 
-        called once when the decorator is compiled, i.e., at compile time.   The
-        once_function is passed the hello_function as a paramter.   The 
-        hello_function is unchanged.
-
-        >>> import dectools
-        >>> @dectools.make_call_once
-        ... def once_function(function):
-        ...     print "called once_function while compiling", function.__name__
-        ... 
-        >>> @once_function
-        ... def hello_function():
-        ...     print "hello"
-        ... 
-        called once_function while compiling hello_function
-        >>> hello_function()
-        hello        
-        
-        This has the same effect as:
-        >>> def once_function(function):
-        ...     print "called once_function while compiling", function.__name__
-        ... 
-        >>> def hello_function():
-        ...     print "hello"
-        ...
-        >>> once_function(hello_function)
-        called once_function while compiling hello_function
-        >>> hello_function()
-        hello        
-        
-    """
-    code = once_function.__code__
-    if code.co_argcount == 1:
-        # call_once has no additional arguments.  It will be used like:
-        #    @call_once
-        #    def hello(name):  ...
-        # so we return the actual decorator.
-        decorated_by_once_function = call_once(once_function)
-        mask(changed=decorated_by_once_function, look_like=once_function)
-        return decorated_by_once_function
-    else:
-        # The once_function has extra arguments, so
-        # it will be used like:  @call_once("compiling", indention=2)
-        # Which means call_once() is a function whose output the real decorator.
-        # So we need to return an intermediate function whose output is a decorator.
-
-        def take_once_function_parameters(*once_args, **once_kwargs):
-            decorated_by_once_function = call_once(
-                once_function, *once_args, **once_kwargs)
-            return decorated_by_once_function
-            
-        mask(changed=take_once_function_parameters, look_like=once_function)
-        return take_once_function_parameters
-        
 def call_once(once_function, *once_args, **once_kwargs):
-    """ This decorator calls once_function before calling the function it decorates.
+    """ This decorator calls once_function after calling the function it decorates.
 
         When decorating hello_function, this function returns an intermediate 
         function that takes hello_function as its argument, calls once_function
@@ -127,93 +73,102 @@ def call_once(once_function, *once_args, **once_kwargs):
         once_function(hello_function, *once_args, **once_kwargs)
         return hello_function
     return decorator_to_call_once_function
-
-
-def make_call_instead(instead_function):
-    """ This decorator creates a new decorator for instead_function.   When the 
-    new decorator is used on a hello_function, the instead_function is called 
-    instead of the hello_function.  The instead_function is passed the 
-    hello_function and its arguments as parameters. """
-    code = instead_function.__code__
-    if code.co_argcount == 1:
-        # call_once has no additional arguments.  It will be used like:
-        #    @call_once
-        #    def hello(name):  ...
-        # so we return the actual decorator.
-        decorated_by_instead_function = call_instead(instead_function)
-        mask(changed=decorated_by_instead_function, look_like=instead_function)
-        return decorated_by_instead_function
-    else:
-        # The instead_function has extra arguments, so
-        # it will be used like:  @call_once("compiling", indention=2)
-        # Which means call_once() is a function whose output the real decorator.
-        # So we need to return an intermediate function whose output is a decorator.
-
-        def take_instead_function_parameters(*instead_args, **instead_kwargs):
-            # assert not ( len(instead_args) == 1 and len(instead_kwargs) == 0
-            #    and type(instead_args[0]) == types.FunctionType),\
-            #    "You made a decorator with arguments but called it without arguments"
-            # Unfortunately, I can't use this assert.  
-            decorated_by_instead_function = call_instead(
-                instead_function, *instead_args, **instead_kwargs)
-            return decorated_by_instead_function
-            
-        mask(changed=take_instead_function_parameters, look_like=instead_function)
-        return take_instead_function_parameters
     
-
-    
-def call_instead(instead_function, *instead_args, **instead_kwargs):
-    """ This decorator decorates a hello_function so that, when hello_function would
-    be called, the instead_function is called instead.  The instead_function is 
-    passed the hello_function and its arguments as paraemters.
-    
-    This function returns an intermediate function which returns the final 
-    hello_function replacement.
-    """
-    _assert_function_takes_function_and_arg_parameters(instead_function)
-    def intermediate_call_instead_function(hello_function):
-        """  Decorator.  Returns a new hello_function that calls instead_function
-             instead.
-             
-             If you got a "TypeError: intermediate_call_instead_function() takes..."
-             error, you may have made a decorator with arguments, and called it without
-             arguments.  For example:
-             
-             @dectools.make_call_instead
-             def trace(function, args, kwargs, indent):  ...
-             @trace
-             def add_two(first, second):..
-             add_two(1,2)
-             TypeError: intermediate_call_instead_function() takes exactly 1 argument (2 given)
-
-        """
-        def hello_decorated_by_call_instead(*hello_args, **hello_kwargs):
-            """ Call the instead function. """
-            return instead_function(hello_function, hello_args, hello_kwargs,
-                                    *instead_args, **instead_kwargs)
-        new_hello_function = mask(changed=hello_decorated_by_call_instead, 
+def call_with_core(core_function, user_function, user_args, user_kwargs):
+    _assert_function_takes_function_and_arg_parameters(user_function)
+    def intermediate_call_user_function(hello_function):
+        hello_decorated_by_core = core_function(user_function, user_args, user_kwargs,
+                                        hello_function)
+        new_hello_function = mask(changed=hello_decorated_by_core, 
                                   look_like=hello_function)
         return new_hello_function
-    return intermediate_call_instead_function
+    return intermediate_call_user_function
+
+def call_instead_core(user_function, user_args, user_kwargs, hello_function):
+    def hello_decorated_by_core(*hello_args, **hello_kwargs):
+        ret_val = user_function(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs)
+        return ret_val
+    return hello_decorated_by_core
+def call_before_core(user_function, user_args, user_kwargs, hello_function):
+    def hello_decorated_by_core(*hello_args, **hello_kwargs):
+        user_function(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs)
+        ret_val = hello_function(*hello_args, **hello_kwargs)
+        return ret_val
+    return hello_decorated_by_core
+
+def call_after_core(user_function, user_args, user_kwargs, hello_function):
+    def hello_decorated_by_core(*hello_args, **hello_kwargs):
+        ret_val = hello_function(*hello_args, **hello_kwargs)
+        user_function(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs)
+        return ret_val
+    return hello_decorated_by_core
+
+def call_if_core(user_function, user_args, user_kwargs, hello_function):
+    def hello_decorated_by_core(*hello_args, **hello_kwargs):
+        if user_function(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs):
+            ret_val = hello_function(*hello_args, **hello_kwargs)
+        else:
+            ret_val = None
+        return ret_val
+    return hello_decorated_by_core
+
+def call_instead(user_function, *user_args, **user_kwargs):
+    return call_with_core(call_instead_core, user_function, user_args, user_kwargs)
+
+def call_before(user_function, *user_args, **user_kwargs):
+    return call_with_core(call_before_core, user_function, user_args, user_kwargs)
+
+def call_after(user_function, *user_args, **user_kwargs):
+    return call_with_core(call_after_core, user_function, user_args, user_kwargs)
+
+def call_if(user_function, *user_args, **user_kwargs):
+    return call_with_core(call_if_core, user_function, user_args, user_kwargs)
+
+def make_into_decorator(decorator_function, user_function):
+    """ This decorator takes a user_function and returns a new dectorator.  When this
+        new decorator is used to decorate a hello_function, the function returned
+        by the decorator_function is returned instead.
+    """
+    code = user_function.__code__
+    if code.co_argcount == 1:
+        # user_function has no additional arguments.  It will be used like:
+        #    @user_function
+        #    def hello(name):  ...
+        # so we return the actual decorator.
+        user_function_decorated = decorator_function(user_function)
+        mask(changed=user_function_decorated, look_like=user_function)
+        return user_function_decorated
+    else:
+        # user_function has extra arguments, so
+        # it will be used like:  @user_function("compiling", indention=2)
+        # Which means the user_function is a function that returns the final decorator.
+        # This function returns that user_function which the final decorator.
+        
+        def intermediate_to_take_user_function_parameters(*user_args, **user_kwargs):
+            user_function_decorated = decorator_function(
+                user_function, *user_args, **user_kwargs)
+            return user_function_decorated
+            
+        mask(changed=intermediate_to_take_user_function_parameters, look_like=user_function)
+        return intermediate_to_take_user_function_parameters
 
 
+def make_call_once(once_function):
+    return make_into_decorator(call_once, once_function)
 
+def make_call_instead(instead_function):
+    return make_into_decorator(call_instead, instead_function)
         
 def make_call_before(before_function):
-    """ This decorator creates a decorator for before_function.  When the decorator
-    is used on a hello_function, the before_function is called, with the 
-    hello_function and its arguments passed as parameters, and then
-    the hello_function is called.
-    """
-    raise NotImplementedError
-    
-def make_call_after(after_function):
-    """ This decorator creates a decorator for after_function.  When the decorator
-    is used on a hello_function, the hello_fuction is called, and then the 
-    after_function is called, with the hello_function and its arguments passed 
-    as parameters.
-    """
-    raise NotImplementedError
+    return make_into_decorator(call_before, before_function)
 
+def make_call_after(after_function):
+    return make_into_decorator(call_after, after_function)
+
+def make_call_if(if_function):
+    return make_into_decorator(call_if, if_function)
 
