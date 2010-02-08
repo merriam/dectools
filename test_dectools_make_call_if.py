@@ -4,14 +4,15 @@ p = print_buffer()
 prnt = p.rint
 printed = p.rinted
 
-prnt("Testing the @dectools.call_if decorator")
+prnt("Testing the @dectools.make_call_if decorator")
 
 prnt("*No additonal parameters...")
+@dectools.make_call_if
 def check_security(function, args, kwargs):
     prnt("I trust you to run function", function.__name__)
     return True
 
-@dectools.call_if(check_security)
+@check_security
 def add_two(first, second):
     prnt("Adding", first, "and", second)
     return first + second
@@ -24,6 +25,7 @@ prnt("1+2=", result)
 printed("1+2= 3")
 
 prnt("Example storing data in the function itself.  Watch out for __slots__")
+@dectools.make_call_if
 def limit(function, args, kwargs, maximum_calls=10):
     """ You may only call some number of times """
     if hasattr(function, "__limit_calls__"):
@@ -39,7 +41,7 @@ def limit(function, args, kwargs, maximum_calls=10):
         return True
 
 
-@dectools.call_if(limit, 2)
+@limit(2)
 def hello():
     prnt("hello")
     
@@ -58,6 +60,7 @@ printed("calls exceeded. denied.")
 
 
 prnt("*Extra parameters")
+@dectools.make_call_if
 def security_level(function, args, kwargs, level):
     prnt("You are level", level)
     if level == "admin":
@@ -68,7 +71,7 @@ def security_level(function, args, kwargs, level):
     else:
         return False
 
-@dectools.call_if(security_level, "admin")
+@security_level("admin")
 def add_three(first, second, third):
     prnt("adding", first, "+", second, "+", third)
     return first + second + third
@@ -76,7 +79,7 @@ def add_three(first, second, third):
 result = add_three(1, 2, 3)
 prnt("1+2+3 =", result)
 
-@dectools.call_if(security_level, "user")
+@security_level("user")
 def subtract_two(first, second):
     prnt("subtracting ", first, "-", second)
     return first - second
@@ -85,7 +88,8 @@ result = subtract_two(3, 2)
 prnt("3-2=", result)
 
 prnt("*ripping out an argument in passing")
-@dectools.call_if(security_level, "user")
+
+@security_level("user")
 def one():
     prnt("one")
 
@@ -100,12 +104,13 @@ prnt("meaning the decorator took a parameter from the call, acted on it, and rem
 prnt("*Example of relying on a global")
 features = ("general", "print", "email", "twitter")
 
+@dectools.make_call_if
 def is_feature_installed(function, args, kwargs, feature="general"):
     global features
     prnt("checking feature", feature)
     return feature in features
 
-@dectools.call_if(is_feature_installed)
+@is_feature_installed()
 def general_stuff():
     prnt("general stuff")
     
@@ -113,7 +118,7 @@ general_stuff()
 printed("checking feature general", -2)
 printed("general stuff")
 
-@dectools.call_if(is_feature_installed, "facebook")
+@is_feature_installed("facebook")
 def post_to_facebook(account, password):
     prnt("posting now")
 

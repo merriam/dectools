@@ -1,0 +1,15 @@
+
+Decorators From Basics to Class Decorators to Decorator Libraries 
+
+<i>These posts are my organization for a talk at PyCon 2010 in Atlanta on February 20, 2010.  I welcome comments and will update the presentation as appropriate.</i>
+
+
+Decorators:  the big @
+
+What is a Python decorator?  
+
+    Using a Python decorator is a design choice to unbundle two concepts.  The Decorator , presenting a "decorator" which
+    affects how another is called.
+    
+    It adds clarity for some relationships.
+

@@ -4,60 +4,146 @@ Talk Outline:
 Title Slide:
     Slides and information are available at my web site.
     
+Overview:  Decorators Information, A decorator example, A decorator library
+    
 What is a Decorator:
     It is a design choice to unbundle two concepts, presenting a "decorator" which
     affects how another is called.
     
-    It adds clarity for some relationships.
+    It adds clarity for some relationships.  It separates ideas and responsibility and improves
+    cohesion (how well a function does one thing).  
     
+    This talk will cover everything from why and when to use a decorator, how classic decorators work,
+    how to use my decorator library (dectools), and how and when to use class decorators.
+        
 What makes a good decorator:
-    Does something easy to describe, even it is hard to do:
+    A good decorator does something easy to describe, even it is hard to do:
         @classmethod  : Makes the decorated function callable by the class and not an instance.
                         Used for making custom constructors/initializers:   
                             @classmethod
                             make_regular_polygon_shape(cls, number_of_points): ...
         @require_admin: Require user to sign in as an administrator before continuing.
         @register_template(url):   Make this function the template called when a url pattern is processed
-        @log:   Dump function call record and parameters into a log file
+        @log:   Dump function call record and parameters into a log file    
         
-        
-Why is a decorator better:        
-    slide of @require_admin versus if statements
-    note clarity, in small type
-    note errors when looking closely
+Why is a decorator better than just calling a function:
+    Here's a simple piece of code that requires the current user to be an administrator to change a price.
+    It does a test, and if it passes, sets the price.   So this function should be called "check_admin_and_set_price"
+    to show it does two things.
     
-Writing a decorator
-    First, let's look a trivial decorator:
+    Here's a whole class of item inventory information.  Some functions require administrator access and
+    some don't.   Don't try to squint to read too much, it's the same pattern.
     
-    def not_implemented(function):
-         throw NotImplemented
+    Here's a different simple piece of code that requires the current user to be an administrator to change a price.
+    The decorator seperates out the checking administrator from the setting price.  The result is easy to read aloud,
+    easier to spot bugs, and has more beauty.   
     
-    print "(1)  About to compile the decorator"
+    Here's the side by side of the two class implementations.  Notice how the shape of the code looks.  There a couple of minor errors in the mixed up code that most people won't spot and test tools will not.
+    
+Writing a decorator (without libraries).  
+    Now let us move on to implementation details for a few minutes.  Implementing decorators without a library is generally more difficult than implementing the functions they decorate.  Some of the challenge is terminology:  "decorator" and "function" get overused.  Also, it does use of lots of fun Python features.
+
+Part 1.  Annouce    
+    Let's start by walking through this decorator that just prints a message when a function is defined takes place.  Or, as most people would say, when it is compiled.
+    
+    print "(#1)  About to compile the decorator"
     def show_when_compiling(function):
-         print "(2)  Compiling ", function.__name__, " now"
+         print "(#3)  Compiling ", function.__name__, " now"
          return function
-    print "(1.5) compiled"
+    print "(#2) compiled the decorator"
          
     @show_when_compiling
     def announce(message):
         print message
+    # announce = show_when_compiling(announce)
         
-    announce("(3).  Open the store")
-    announce("(4).  Close the store")
+    announce("(#4).  The store is opening.")
+    announce("(#5).  The store is closing.")
         
     Walk through:
-        scripts go top to bottom, often in a special namespace
-        this decorator takes a function as an argument and returns a function as a return value.
-        let's unwrap the decorator for a moment:
-        def announce(message):
-            print message
-        announce = show_when_compiling(announce)
+        Python is just scripts executing top to bottom, with some namespaces.
         
+        We start by printing message 1
+        Then we define the show_when_compiling function.  Notice that it takes a function as an
+        argument, then returns it unchanged.  Functions are just another variable type in Python, and
+        can be assigned, put in lists, and passed to other functions.
+        On message #3, notice that functions have fields, as do classes, that have some handy variables.
+        
+        Now we get to the "@".  This is one of the syntax sugar tricks to make reading and writing the
+        code easier.   This line is actually executed AFTER the def statement below it.  Just like list
+        comprehensions, Python unrolls this code into the snippet in the comment.  Not _exactly_, it saves
+        one assignment to announce with clever temporaries.  But close enough.   This means it compiles
+        up announce(), passes it to show_when_compiling, show_when_compiling returns it unchanged, and
+        it gets assigned back to announce unchanged.  Finally, we call announce a couple times for fun.
+ 
+ 
+Part 2.        
+
 The "requires admin decorator"
-    This is a bit harder, a long example
-    Walk through twice... once with just colored blocks in execution order, once in lexical order
+    This is decorator is a bit harder, because it uses more of Python syntax than people need for some jobs.
+    Its a long example.   We are going to go through it twice: once from top to bottom and once in order of execution.  
+    
+    def check_admin(user_function):
+       def decorated_by_check_admin(*user_args, **user_kwargs):
+           # TODO:  implement something
+           print "I trust you to run function", user_function.__name__
+           return user_function(*user_args, **user_kwargs)
+       return decorated_by_check_admin
+    
+    class Item(object):
+        ....
+        @check_admin
+        def update_text(self, name, description):
+            print "Updating", self.name, "to", name
+            self.name, self.description = name, description
+            
+    ipod = Item()  
+    ipod.update_text('iPod', 'Closed source music gadget')
+    
+        
+    OK, let's read through the code one line at a time.
+    
+    Line 1 defines the check_admin function, which takes user_function as an argument, like we
+    saw in the last example.  check_admin is a decorator, meaning it takes a function in and 
+    returns a function out.   In this case, the function out will be a new a function that first 
+    checks security and then calls the function that was passed in, named user_function.
+    
+    Line 2, first word.  'def'.  We are defining a local function, just like "a=1" would define
+    a local variable..  Remember 'def' is just a statement that gets executed.  This
+    statement only gets executed when executing the check_admin function.  It has a name which
+    let's you know its the decorated function, the one returned by the decorator.
+    
+    More on line 2, *args and **kwargs.   The '*' operator is special inside parameter lists.  
+    When receiving parameters, '*' takes all remaining arguments without keywords and returns 
+    them as a single list.  When calling, '*' expands a list into seperate parameters while '**'
+    does the same with a dictionary.  On line 5, we use that syntax to call the passed_in 
+    function with the same arguments and keyword arguments passed on the outside.  It calls
+    the passed in function, returning its value.
+    
+    Now we return the decorated_by_check admin.   While it didn't execute it function this time,
+    it did execute the 'def decorated_by_check_admin' statement, which binds the user_function
+    on lines 4 and 5 to the current values of the parameters.
+    
+    I expect this confusing if its your first time walkiing through a decorator, and you might
+    be bored if its not.  I'm going to address the confusion by stepping through the function.
+    
+    
     
 Talk about the meta inforation:
+
+    One last thing about functions.  They have a lot of information fields, like the __name__,
+    the documentation string, number of arguments and the like.   
+   
+
+    def hello():
+        print "hello"
+        
+    hi = hello
+    
+    print hi
+    
+
+
     Decorators confuse IDEs, some other tools.  Look at angelfish.set_price.__name__()
     Also, the docstring, the number of arguments, the location, etc.
     This is a semantic issue; not always clear about the right answer.

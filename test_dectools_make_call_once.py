@@ -85,6 +85,11 @@ printed("I don't know you.")
 
 prnt("All Done")
 
+#try:
+#    @dectools.make_call_once
+#    def print_message(message, function, *args, **kwargs):
+#        print "Hi"
+#except:
 # This fails    
 #@dectools.make_call_once
 #def print_message(message, function, *args, **kwargs):

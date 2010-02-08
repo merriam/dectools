@@ -1,0 +1,11 @@
+# Test stuff, because WingZ testing is just broken.
+
+import test_dectools_call_if
+import test_dectools_call_before
+import test_dectools_call_after
+import test_dectools_call_instead
+import test_dectools_make_call_if
+import test_dectools_make_call_before
+import test_dectools_make_call_after
+import test_dectools_make_call_instead
+

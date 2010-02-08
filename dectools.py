@@ -4,10 +4,12 @@
 
 import types
 
-class _Sentinal_Parameter: pass
+class _Sentinal_Parameter: 
+    pass
 # A handy parameter passed internally to keep down accidental misuse
+# TODO:  see if I can figure out how to use this to keep down accidents in usage
 
-def mask(changed, look_like):
+def mimic(changed, look_like):
     """ Make the changed function have the same name as the look_like function.
     TODO:  copy over the signature, defaults, etc.
     TODO:  describe and test log of decorator changes.
@@ -79,17 +81,22 @@ def call_with_core(core_function, user_function, user_args, user_kwargs):
     def intermediate_call_user_function(hello_function):
         hello_decorated_by_core = core_function(user_function, user_args, user_kwargs,
                                         hello_function)
-        new_hello_function = mask(changed=hello_decorated_by_core, 
+        new_hello_function = mimic(changed=hello_decorated_by_core, 
                                   look_like=hello_function)
         return new_hello_function
+    intermediate_call_user_function.__doc__ = ("Intermediate function of " 
+            + user_function.__name__ + " being decorated by a " 
+            + core_function.__name__ + " core.")
     return intermediate_call_user_function
 
 def call_instead_core(user_function, user_args, user_kwargs, hello_function):
+    """ Core function of call_instead and make_call_instead decorators """
     def hello_decorated_by_core(*hello_args, **hello_kwargs):
         ret_val = user_function(hello_function, hello_args, hello_kwargs,
                                 *user_args, **user_kwargs)
         return ret_val
     return hello_decorated_by_core
+
 def call_before_core(user_function, user_args, user_kwargs, hello_function):
     def hello_decorated_by_core(*hello_args, **hello_kwargs):
         user_function(hello_function, hello_args, hello_kwargs,
@@ -128,19 +135,19 @@ def call_after(user_function, *user_args, **user_kwargs):
 def call_if(user_function, *user_args, **user_kwargs):
     return call_with_core(call_if_core, user_function, user_args, user_kwargs)
 
-def make_into_decorator(decorator_function, user_function):
+def make_into_decorator(decorator_function, user_function, number_of_basic_args = 3):
     """ This decorator takes a user_function and returns a new dectorator.  When this
         new decorator is used to decorate a hello_function, the function returned
-        by the decorator_function is returned instead.
+        by the decorator_function is returned instead.        
     """
     code = user_function.__code__
-    if code.co_argcount == 1:
+    if code.co_argcount == number_of_basic_args:
         # user_function has no additional arguments.  It will be used like:
         #    @user_function
         #    def hello(name):  ...
         # so we return the actual decorator.
         user_function_decorated = decorator_function(user_function)
-        mask(changed=user_function_decorated, look_like=user_function)
+        mimic(changed=user_function_decorated, look_like=user_function)
         return user_function_decorated
     else:
         # user_function has extra arguments, so
@@ -153,12 +160,12 @@ def make_into_decorator(decorator_function, user_function):
                 user_function, *user_args, **user_kwargs)
             return user_function_decorated
             
-        mask(changed=intermediate_to_take_user_function_parameters, look_like=user_function)
+        mimic(changed=intermediate_to_take_user_function_parameters, look_like=user_function)
         return intermediate_to_take_user_function_parameters
 
 
 def make_call_once(once_function):
-    return make_into_decorator(call_once, once_function)
+    return make_into_decorator(call_once, once_function, number_of_basic_args=1)
 
 def make_call_instead(instead_function):
     return make_into_decorator(call_instead, instead_function)
@@ -172,3 +179,39 @@ def make_call_after(after_function):
 def make_call_if(if_function):
     return make_into_decorator(call_if, if_function)
 
+def log_in_two_steps(function, args, kwargs, before_string_function, after_string_function):
+    # TODO add a log_output parameter, which acts like a file handler, or takes a string
+    before_string = function.__name__ + ": called with args:" + str(args) + str(kwargs)
+    print before_string
+    try:
+        ret_val = function(*args, **kwargs)
+    except:
+        import sys
+        after_string = function.__name__ + ": Exception: " + str(sys.exc_info())
+        print after_string
+        raise
+    else:
+        after_string = function.__name__ + ": returned value:" + str(ret_val)
+        print after_string
+        return ret_val
+
+
+
+@make_call_instead
+def log_verbose(function, args, kwargs):
+    # TODO add a log_output parameter, which acts like a file handler, or takes a string
+    before_string = function.__name__ + ": called with args:" + str(args) + str(kwargs)
+    print before_string
+    try:
+        ret_val = function(*args, **kwargs)
+    except:
+        import sys
+        after_string = function.__name__ + ": Exception: " + str(sys.exc_info())
+        print after_string
+        raise
+    else:
+        after_string = function.__name__ + ": returned value:" + str(ret_val)
+        print after_string
+        return ret_val
+    
+    
