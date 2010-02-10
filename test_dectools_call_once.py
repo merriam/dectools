@@ -5,6 +5,8 @@ from print_buffer import print_buffer
 p = print_buffer()
 prnt = p.rint
 printed = p.rinted
+
+prnt("testing @dectools.(make)?_call_if")
     
 prnt("Testing the @dectools.call_once")
 
