@@ -17,6 +17,9 @@ def add_author(function):
 def think():
     prnt("THINK!")
 
+prnt("Call once returns the original function:", think.__name__)
+printed("Call once returns the original function: think")
+
 prnt("Now we have an attribute:", think.__author__)
 printed("Now we have an attribute: ME")
 

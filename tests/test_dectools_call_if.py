@@ -88,22 +88,38 @@ prnt("*ripping out an argument in passing")
 @dectools.call_if(security_level, "user")
 def one():
     prnt("one")
+    
+@dectools.call_if(security_level, "user")
+def two(**kwargs):
+    assert not kwargs
+    prnt("You are new number 2.")
 
 one()
 printed("You are level user")
 prnt("meaning it failed security and did not print one")
-one(override_security=True)
-printed("You are level user", -2)
-printed("one")
+try:
+    one(override_security=True)
+except TypeError:
+    prnt("I used to be able to do that - Now I use signature preserving functions.")
+    prnt("one() takes no parameters")
+printed("one() takes no parameters")
+
+two(override_security=True)
+printed("You are new number 2.")
+prnt("That can work however, because two() takes arbitrary parameters.")
 prnt("meaning the decorator took a parameter from the call, acted on it, and removed it from the call.")
 
 prnt("*Example of relying on a global")
-features = ("general", "print", "email", "twitter")
+features = ["general", "print", "email", "twitter"]
 
 def is_feature_installed(function, args, kwargs, feature="general"):
     global features
     prnt("checking feature", feature)
-    return feature in features
+    if feature in features:
+        features.remove(feature)
+        return True
+    else:
+        return False
 
 @dectools.call_if(is_feature_installed)
 def general_stuff():
@@ -112,6 +128,8 @@ def general_stuff():
 general_stuff()
 printed("checking feature general", -2)
 printed("general stuff")
+general_stuff()
+printed("checking feature general")
 
 @dectools.call_if(is_feature_installed, "facebook")
 def post_to_facebook(account, password):
@@ -120,12 +138,10 @@ def post_to_facebook(account, password):
 post_to_facebook("me", "password")
 printed("checking feature facebook")
 prnt("Now update the global")
-features = ("general", "print", "email", "twitter", "facebook")
+features = ["general", "print", "email", "twitter", "facebook"]
 post_to_facebook("you", "123")
 printed("checking feature facebook", -2)
 printed("posting now")
 
 prnt("All done")
-
-
 

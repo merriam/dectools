@@ -40,11 +40,13 @@ def _dict_as_called(function, args, kwargs):
     
     return params
 
+@dectools.make_call_instead
 def pre(function, args, kwargs, expression_string):
     new_locals = _dict_as_called(function, args, kwargs)  # parameters as if called.
     assert eval(expression_string, globals(), new_locals), "Precondition Failed in " + function.__name__ + ": " + expression_string
     return function(*args, **kwargs)
 
+@dectools.make_call_instead
 def post(function, args, kwargs, expression_string):
     """ post condition test.  Test must pass even if an exception was thrown in 
     the function. """
@@ -65,24 +67,25 @@ def post(function, args, kwargs, expression_string):
 
 
 
-prec = dectools.make_call_instead(pre)
-postc = dectools.make_call_instead(post)
 ok = "self.name and self.price >= 0 and Item.tax_rate >= 0"
 class Item(object):
     tax_rate = 0.10
     
-    @postc(ok)        
+    @post("3==3")
+    @post("self.price == self.price * 2 * 0.5")
+    @post("True")
+    @post(ok)        
     def __init__(self, name, price):
         self.name = name
         self.price = price
         
-    @prec(ok)
-    #@postc(ok)
+    @pre(ok)
+    @post(ok)
     def adjust_price(self, adjustment):
         self.price += adjustment
         
-    @postc(ok)
-    @prec(ok)
+    @post(ok)
+    @pre(ok)
     def get_taxes(self):
         return self.price * Item.tax_rate
     
@@ -146,9 +149,15 @@ p = _dict_as_called(annoy, (1, 2, 3, 4, '5'), {'fourth':4, 'sixth':6})
 assert (1, 2, 3, (4, '5'), {'fourth':4, 'sixth': 6}) == (p['first'], p['second'], p['third'], p['args'], p['kwargs'])
 
 print "OK!"
-    
-pre(add, (1,2,3), {}, "third == 3")
+
+@pre("third == 3")
+def add2(first, second=2, third=3):
+    return first + second + third
+
+total = add2(1)
+prnt(total)
 sixty = 60
+
 pre(add, (1,), {}, "first == 1 and sixty == 60")
 
 
