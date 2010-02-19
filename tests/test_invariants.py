@@ -11,52 +11,7 @@ printed = p.rinted
 prnt("Now, let's add invariants but just with self and no locals(), globals()")
 import random
 
-def _public_methods(cls):
-    """ list of public methods in the cls """
-    methods = [item for item in dir(cls) if item[0] != '_' and 
-        type(getattr(cls, item)) == types.UnboundMethodType]
-    return methods
-
-@dectools.make_call_instead
-def _call_invariant(function, args, kwargs):
- 
-    """ Call _invariant on one method, before and after.  Avoid the infinite
-         recursion problem.  """
-    
-    # get self
-    assert function.__code__.co_varnames[0] == 'self'
-    self = args[0] if args else kwargs['self']
-    # No, I have never seen a default argument for self.
-
-    if function.__name__ != '__init__':
-        if not hasattr(self, '_invariant_recursion'):
-            self._invariant_recursion = True       
-            self._invariant()        # pre
-            del self._invariant_recursion
-
-    try:
-        return_val = function(*args, **kwargs)
-    except:
-        if not hasattr(self, '_invariant_recursion'):
-            self._invariant_recursion = True       
-            self._invariant()        # pre
-            del self._invariant_recursion
-        raise
-    if not hasattr(self, '_invariant_recursion'):
-        self._invariant_recursion = True       
-        self._invariant()        # pre
-        del self._invariant_recursion
-    return return_val        
-    
-def invariant(cls):
-    """ Decorate __init__ and each public method to call _invariant(). """
-    for method in _public_methods(cls) + ['__init__']:
-        func = getattr(cls, method).__func__
-        func = _call_invariant(func)
-        setattr(cls, method, func)
-    return cls
-
-@invariant
+@dectools.invariant
 class Deck(object):
     def __init__(self, cards = 52, players=2, piles=0):
         self.cards = cards
@@ -112,7 +67,7 @@ bad_assert("Deck(players=100, cards=200)", globals(), locals())
 
 prnt("======================================")
 
-@invariant
+@dectools.invariant
 class numbers:
     def __init__(self):
         self.num1 = 4

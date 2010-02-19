@@ -288,63 +288,36 @@ def make_call_if(if_function):
 
 
 #= Logging ===================================================
+def _nothing(*args, **kwargs):
+    pass
+
+def _basic_output(line):
+    print line
+def _basic_before(function, args, kwargs):
+    return function.__name__ + ": called with args:" + str(args) + str(kwargs)
+def _basic_after(function, args, kwargs, exception, return_val):
+    if exception:
+        return function.__name__ + ": Exception: " + str(sys.exc_info())
+    else:
+        return function.__name__ + ": returned value:" + str(return_val)
+
 @make_call_instead
-def logging(function, args, kwargs, output=None, before=None, after=None):
-    def basic_output(line):
-        print line
-    def basic_before(function, args, kwargs):
-        return function.__name__ + ": called with args:" + str(args) + str(kwargs)
-    def basic_after(function, args, kwargs, exception, return_val):
-        if exception:
-            return function.__name__ + ": Exception: " + str(sys.exc_info())
-        else:
-            return function.__name__ + ": returned value:" + str(ret_val)
-    output = output or basic_output
-    before = before or basic_before
-    after = after or basic_after
+def logging(function, args, kwargs, output=_basic_output, before=_basic_before, after=_basic_after):
+    before = before or _nothing
+    after = after or _nothing
     
     output(before(function, args, kwargs))
     try:
         return_val = function(*args, **kwargs)
     except:
-        output(after(function, args, kwargs, exception=True, return_val = None)
+        output(after(function, args, kwargs, True, None))
         raise
     else:
-        output(after(function, args, kwargs, exception = False, return_val = return_val))
+        output(after(function, args, kwargs, False, return_val))
         return return_val
 
 
 
-    
-    
-    
-
-
-
-@make_call_instead
-def log_verbose(function, args, kwargs, output_function = None):
-    """ Log call, arguments, and return value or exception to a output_function 
-    that takes a string, or to stdout if no output_function is provided.  """
-
-    # prnt = a function to print
-    def p(string):
-        """ Just a print function """
-        print string
-    prnt = output_function if output_function else p
-
-    before_string = ">" + function.__name__ + " called with args:" + str(args) + str(kwargs)
-    prnt(before_string)
-
-    try:
-        ret_val = function(*args, **kwargs)
-    except:
-        after_string = "!" + function.__name__ + " exception: " + str(sys.exc_info())
-        prnt(after_string)
-        raise
-    else:
-        after_string = "<" + function.__name__ + " returned value:" + str(ret_val)
-        prnt(after_string)
-        return ret_val
         
 def _dict_as_called(function, args, kwargs):
     """ return a dict of all the args and kwargs as the keywords they would
@@ -421,3 +394,49 @@ def post(function, args, kwargs, expression_string, globals_dict=None, locals_di
                 "Post-condition failed in " + function.__name__ + "\n" + 
                 "post-condition expression: " + expression_string)
     return retval
+
+####################
+def _public_methods(cls):
+    """ list of public methods in the cls """
+    methods = [item for item in dir(cls) if item[0] != '_' and 
+        type(getattr(cls, item)) == types.UnboundMethodType]
+    return methods
+
+@make_call_instead
+def _call_invariant(function, args, kwargs):
+    """ Call _invariant on one method, before and after.  Avoid the infinite
+         recursion problem.  """
+    
+    # get self
+    assert function.__code__.co_varnames[0] == 'self'
+    self = args[0] if args else kwargs['self']
+    # No, I have never seen a default argument for self.
+
+    if function.__name__ != '__init__':
+        if not hasattr(self, '_invariant_recursion'):
+            self._invariant_recursion = True       
+            self._invariant() # pre
+            del self._invariant_recursion
+
+    try:
+        return_val = function(*args, **kwargs)
+    except:
+        if not hasattr(self, '_invariant_recursion'):
+            self._invariant_recursion = True       
+            self._invariant()        # pre
+            del self._invariant_recursion
+        raise
+    if not hasattr(self, '_invariant_recursion'):
+        self._invariant_recursion = True       
+        self._invariant()        # pre
+        del self._invariant_recursion
+    return return_val        
+    
+def invariant(cls):
+    """ Decorate __init__ and each public method to call _invariant(). """
+    assert type(cls) in (types.TypeType, types.ClassType)
+    for method in _public_methods(cls) + ['__init__']:
+        func = getattr(cls, method).__func__
+        func = _call_invariant(func)
+        setattr(cls, method, func)
+    return cls

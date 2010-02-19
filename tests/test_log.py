@@ -6,64 +6,51 @@ from print_buffer import print_buffer
 p = print_buffer()
 prnt = p.rint
 printed = p.rinted
+printed_lines = p.rinted_lines
 
-prnt("Testing log_verbose with simple calls")
+prnt("Testing logging with simple calls")
 
-prnt("First, output to stdout")
-@dectools.log_verbose()  # Notice the hard-to-debug error is I call without parens.
+@dectools.logging(output=prnt) 
 def greetings(name='Charles'):
     """ Print a greeting. """
     prnt("Hello, ", name)
 
 greetings('bob')
+printed_lines("""greetings: called with args:('bob',){}
+Hello,  bob
+greetings: returned value:None""")
 greetings()
+printed_lines("""greetings: called with args:('Charles',){}
+Hello,  Charles
+greetings: returned value:None""")
 
 prnt("Now, output to our own prnt function")
-@dectools.log_verbose(prnt)  # Notice the hard-to-debug error is I call without parens.
+@dectools.logging(prnt)  # Notice the hard-to-debug error is I call without parens.
 def greetings2(name='Charles'):
     """ Print a greeting. """
     prnt("Hello, ", name)
 
 greetings2('bob')
-greetings2()
-
+printed_lines("""greetings2: called with args:('bob',){}
+Hello,  bob
+greetings2: returned value:None""")
 
 prnt("Testing Verbose")
-@dectools.log_verbose()
+
+@dectools.logging(output=prnt, before=None, after=lambda f,a,kw,e,r: ":"+f.__name__)
 def div1(top, bottom=1):
     return top / float(bottom)
 
-div1(4, bottom=2)
-div1(2)
 try:
     div1(3,0)
 except ZeroDivisionError:
-    pass
+    printed(":div1")
+    prnt("We printed.")
 else:
     assert False
 
-    
-@dectools.log_verbose()
-def add(first, second=0, third=0):
-    return first + second + third
 
+div1(4, bottom=2)
+prnt(":div1")
 
-add(third=3, second=2, first=1)
-
-
-
-
-
-
-def div2(top, bottom=1):
-    return top / float(bottom)
-
-def div3(top, bottom=1):
-    return top / float(bottom)
-
-def div4(top, bottom=1):
-    return top / float(bottom)
-
-def div5(top, bottom=1):
-    return top / float(bottom)
-
+prnt("All done")
