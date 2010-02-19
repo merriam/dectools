@@ -11,8 +11,13 @@
 # mold" is a function follows a pattern in the parameters it takes, and performs 
 # some action.  It is usually used by some sort of "stamper", to call it instead.
 
+import sys
 import types
 import decorator
+import inspect
+import traceback
+
+#== Plumbing
 doc_new_warning = "(decorated by dectools.  see __decorators__ and __decorator_chain__)\n"
 
 def _get_history_attributes(changed, model, explanations = None, chain = None):
@@ -103,6 +108,67 @@ def _assert_function_takes_parameters(a_function, number_of_parameters):
     else:
         assert False, "number_of_parameters makes no sense."
 
+    
+def call_with_stamper(stamper_function, user_mold, user_args, user_kwargs):
+    assert (type(user_args) == types.TupleType and 
+            type(user_kwargs) == types.DictType), (
+            "Did not receive correct types.  Did you leave off () when using @" + 
+            user_mold.__name__ + "()?")
+    
+    _assert_function_takes_parameters(user_mold, 3)
+    # this used to be called did_you_misuse_parenthesis_when_using_your_decorator()
+    def did_you_misuse_parenthesis_when_using_your_decorator(hello_function):
+        assert callable(hello_function), ("Wrong type.  Did you forget () when using " 
+                    + user_mold.__name__ + "()")
+        concrete_decorator = stamper_function(user_mold, user_args, user_kwargs,
+                                        hello_function)
+        new_explanation = "decorated by the %s stamper\n  using the %s(%s) mold" % (
+            stamper_function.__name__, user_mold.__name__, 
+            ", ".join([repr(i) for i in user_args] +
+                      [(str(k)+" = "+repr(v)) for k, v in user_kwargs.iteritems()]))
+        new_functions = [ stamper_function, user_mold]
+        concrete_decorator = mimic_signature(concrete_decorator, hello_function, 
+                                        new_explanation, new_functions)
+        return concrete_decorator
+    return did_you_misuse_parenthesis_when_using_your_decorator
+
+def call_instead_stamper(user_mold, user_args, user_kwargs, hello_function):
+    """ stamper function of call_instead and make_call_instead decorators """
+    def concrete_decorator(*hello_args, **hello_kwargs):
+        """ This is the concrete decorator called by any @call_.. or @make_call_..."""
+        ret_val = user_mold(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs)
+        return ret_val
+    return concrete_decorator
+
+def call_before_stamper(user_mold, user_args, user_kwargs, hello_function):
+    def concrete_decorator(*hello_args, **hello_kwargs):
+        user_mold(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs)
+        ret_val = hello_function(*hello_args, **hello_kwargs)
+        return ret_val
+    return concrete_decorator
+
+def call_after_stamper(user_mold, user_args, user_kwargs, hello_function):
+    def concrete_decorator(*hello_args, **hello_kwargs):
+        ret_val = hello_function(*hello_args, **hello_kwargs)
+        user_mold(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs)
+        return ret_val
+    return concrete_decorator
+
+def call_if_stamper(user_mold, user_args, user_kwargs, hello_function):
+    def concrete_decorator(*hello_args, **hello_kwargs):
+        if user_mold(hello_function, hello_args, hello_kwargs,
+                                *user_args, **user_kwargs):
+            ret_val = hello_function(*hello_args, **hello_kwargs)
+        else:
+            ret_val = None
+        return ret_val
+    return concrete_decorator
+
+#== call_* ========================
+
 def call_once(once_function, *once_args, **once_kwargs):
     """ This decorator calls once_function after calling the function it decorates.
 
@@ -123,73 +189,13 @@ def call_once(once_function, *once_args, **once_kwargs):
     # assert that instead_function ends takes a parameter named "function" or "klass",
     # but not the args and kwargs.   
     _assert_function_takes_parameters(once_function, 1)
-    def decorator_to_call_once_function(hello_function):
+    def concrete_call_once_decorator(hello_function):
         """  Decorator.  When applied (compile time), it calls once_function once and 
              then returns the original function.  That is, no effect except at 
              the decoration (compile) time. """
         once_function(hello_function, *once_args, **once_kwargs)
         return hello_function
-    return decorator_to_call_once_function
-    
-def call_with_stamper(stamper_function, user_mold, user_args, user_kwargs):
-    assert (type(user_args) == types.TupleType and 
-            type(user_kwargs) == types.DictType), (
-            "Did not receive correct types.  Did you leave off () when using @" + 
-            user_mold.__name__ + "()?")
-    
-    _assert_function_takes_parameters(user_mold, 3)
-    # this used to be called did_you_misuse_parenthesis_when_using_your_decorator()
-    def did_you_misuse_parenthesis_when_using_your_decorator(hello_function):
-        assert callable(hello_function), ("Wrong type.  Did you forget () when using " 
-                    + user_mold.__name__ + "()")
-        hello_decorated_by_stamper = stamper_function(user_mold, user_args, user_kwargs,
-                                        hello_function)
-        new_explanation = "decorated by the %s stamper\n  using the %s(%s) mold" % (
-            stamper_function.__name__, user_mold.__name__, 
-            ", ".join([repr(i) for i in user_args] +
-                      [(str(k)+" = "+repr(v)) for k, v in user_kwargs.iteritems()]))
-        new_functions = [ stamper_function, user_mold]
-        hello_decorated_by_stamper = mimic_signature(hello_decorated_by_stamper, hello_function, 
-                                        new_explanation, new_functions)
-        return hello_decorated_by_stamper
-    did_you_misuse_parenthesis_when_using_your_decorator.__name__ = "stamp_with_" + user_mold.__name__
-    did_you_misuse_parenthesis_when_using_your_decorator.__doc__ = ("concrete decorator that stamps a function " + 
-            "with " + user_mold.__name__ + " and " + stamper_function.__name__)
-    return did_you_misuse_parenthesis_when_using_your_decorator
-
-def call_instead_stamper(user_mold, user_args, user_kwargs, hello_function):
-    """ stamper function of call_instead and make_call_instead decorators """
-    def hello_decorated_by_stamper(*hello_args, **hello_kwargs):
-        ret_val = user_mold(hello_function, hello_args, hello_kwargs,
-                                *user_args, **user_kwargs)
-        return ret_val
-    return hello_decorated_by_stamper
-
-def call_before_stamper(user_mold, user_args, user_kwargs, hello_function):
-    def hello_decorated_by_stamper(*hello_args, **hello_kwargs):
-        user_mold(hello_function, hello_args, hello_kwargs,
-                                *user_args, **user_kwargs)
-        ret_val = hello_function(*hello_args, **hello_kwargs)
-        return ret_val
-    return hello_decorated_by_stamper
-
-def call_after_stamper(user_mold, user_args, user_kwargs, hello_function):
-    def hello_decorated_by_stamper(*hello_args, **hello_kwargs):
-        ret_val = hello_function(*hello_args, **hello_kwargs)
-        user_mold(hello_function, hello_args, hello_kwargs,
-                                *user_args, **user_kwargs)
-        return ret_val
-    return hello_decorated_by_stamper
-
-def call_if_stamper(user_mold, user_args, user_kwargs, hello_function):
-    def hello_decorated_by_stamper(*hello_args, **hello_kwargs):
-        if user_mold(hello_function, hello_args, hello_kwargs,
-                                *user_args, **user_kwargs):
-            ret_val = hello_function(*hello_args, **hello_kwargs)
-        else:
-            ret_val = None
-        return ret_val
-    return hello_decorated_by_stamper
+    return concrete_call_once_decorator
 
 def call_instead(user_mold, *user_args, **user_kwargs):
     return call_with_stamper(call_instead_stamper, user_mold, user_args, user_kwargs)
@@ -202,6 +208,7 @@ def call_after(user_mold, *user_args, **user_kwargs):
 
 def call_if(user_mold, *user_args, **user_kwargs):
     return call_with_stamper(call_if_stamper, user_mold, user_args, user_kwargs)
+
 
 def stamp_into_decorator(stamper, user_mold, number_of_basic_args = 3):
     """ 
@@ -279,21 +286,38 @@ def make_call_after(after_function):
 def make_call_if(if_function):
     return stamp_into_decorator(call_if, if_function)
 
-def general_logging_function(function, args, kwargs, before_string_function , after_string_function):
-    # TODO add a log_output parameter, which acts like a file handler, or takes a string
-    before_string = function.__name__ + ": called with args:" + str(args) + str(kwargs)
-    print before_string
+
+#= Logging ===================================================
+@make_call_instead
+def logging(function, args, kwargs, output=None, before=None, after=None):
+    def basic_output(line):
+        print line
+    def basic_before(function, args, kwargs):
+        return function.__name__ + ": called with args:" + str(args) + str(kwargs)
+    def basic_after(function, args, kwargs, exception, return_val):
+        if exception:
+            return function.__name__ + ": Exception: " + str(sys.exc_info())
+        else:
+            return function.__name__ + ": returned value:" + str(ret_val)
+    output = output or basic_output
+    before = before or basic_before
+    after = after or basic_after
+    
+    output(before(function, args, kwargs))
     try:
-        ret_val = function(*args, **kwargs)
+        return_val = function(*args, **kwargs)
     except:
-        import sys
-        after_string = function.__name__ + ": Exception: " + str(sys.exc_info())
-        print after_string
+        output(after(function, args, kwargs, exception=True, return_val = None)
         raise
     else:
-        after_string = function.__name__ + ": returned value:" + str(ret_val)
-        print after_string
-        return ret_val
+        output(after(function, args, kwargs, exception = False, return_val = return_val))
+        return return_val
+
+
+
+    
+    
+    
 
 
 
@@ -314,7 +338,6 @@ def log_verbose(function, args, kwargs, output_function = None):
     try:
         ret_val = function(*args, **kwargs)
     except:
-        import sys
         after_string = "!" + function.__name__ + " exception: " + str(sys.exc_info())
         prnt(after_string)
         raise
@@ -323,3 +346,78 @@ def log_verbose(function, args, kwargs, output_function = None):
         prnt(after_string)
         return ret_val
         
+def _dict_as_called(function, args, kwargs):
+    """ return a dict of all the args and kwargs as the keywords they would
+    be received in a real function call.  It does not call function.
+    """
+
+    names, args_name, kwargs_name, defaults = inspect.getargspec(function)
+    
+    # assign basic args
+    params = {}
+    if args_name:
+        basic_arg_count = len(names)
+        params.update(zip(names[:], args))  # zip stops at shorter sequence
+        params[args_name] = args[basic_arg_count:]
+    else:
+        params.update(zip(names, args))    
+    
+    # assign kwargs given
+    if kwargs_name:
+        params[kwargs_name] = {}
+        for kw, value in kwargs.iteritems():
+            if kw in names:
+                params[kw] = value
+            else:
+                params[kwargs_name][kw] = value
+    else:
+        params.update(kwargs)
+    
+    # assign defaults
+    if defaults:
+        for pos, value in enumerate(defaults):
+            if names[-len(defaults) + pos] not in params:
+                params[names[-len(defaults) + pos]] = value
+            
+    # check we did it correctly.  Each param and only params are set
+    assert set(params.iterkeys()) == (set(names)|set([args_name])|set([kwargs_name])
+                                      )-set([None])
+    
+    return params
+
+################################################################################
+# Conditionals
+
+@make_call_instead
+def pre(function, args, kwargs, expression_string, globals_dict=None, locals_dict=None):
+    locals_dict = locals_dict or {}
+    globals_dict = globals_dict or {}
+    
+    new_locals = locals_dict.copy()
+    new_locals.update(_dict_as_called(function, args, kwargs))
+    assert eval(expression_string, globals_dict, new_locals), \
+           "Precondition Failed in " + function.__name__ + ": " + expression_string
+    return function(*args, **kwargs)
+
+@make_call_instead
+def post(function, args, kwargs, expression_string, globals_dict=None, locals_dict=None):
+    """ post condition test.  Test must pass even if an exception was thrown in 
+    the function. """
+    locals_dict = locals_dict or {}
+    globals_dict = globals_dict or {}
+    
+    new_locals = locals_dict.copy()
+    new_locals.update(_dict_as_called(function, args, kwargs))
+    try:
+        retval = function(*args, **kwargs)
+    except:        
+        assert eval(expression_string, globals_dict, new_locals), ("After Unhandled Exception, " 
+                "post-condition failed in " + function.__name__ + "\n" +
+                "post-condition expression: " + expression_string + "\n" +
+                "exception traceback: " + traceback.format_exc())
+        raise
+    else:
+        assert eval(expression_string, globals_dict, new_locals), (
+                "Post-condition failed in " + function.__name__ + "\n" + 
+                "post-condition expression: " + expression_string)
+    return retval
