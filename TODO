@@ -1,0 +1,8 @@
+Push files into http://github.com/merriam/dectools.
+Fix distribution:  apparently PyPi doens't have source.
+Update PyCon web page with the information.
+Write a simi-reasonable project page or pick one from elsewhere.
+
+Fix tests to use correct decorarator.decorator syntax
+Look into making dectools a class (probably simplier)
+

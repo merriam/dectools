@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+     "http://www.w3.org/TR/html4/transitional.dtd">
+<html>
+<head>
+  <meta HTTP-EQUIV=CONTENT-TYPE CONTENT="text/html; charset=utf-8">
+  <title>Slide 7</title>
+</head>
+<body text="#000080" bgcolor="#F7F9FC" link="#000080" vlink="#0000CC" alink="#000080">
+<center>
+<a href="text0.html">First page</a> <a href="text5.html">Back</a> <a href="text7.html">Continue</a> <a href="text19.html">Last page</a> <a href="dectalk.html">Overview</a> <a href="img6.html">Graphics</a></center><br>
+<h1 style="direction:ltr;"><font color="#280099">Simple “Call Once” Decorator</font></h1>
+<h2 style="direction:ltr;"><font color="#280099">def register(function):</font>
+<h2 style="direction:ltr;"><font color="#280099">	print “LOOK! “, function.__name__</font>
+<h2 style="direction:ltr;"><font color="#280099">	return function</font>
+<h2 style="direction:ltr;"><font color="#280099"></font>
+<h2 style="direction:ltr;"><font color="#280099">@register</font>
+<h2 style="direction:ltr;"><font color="#280099">def print_hello():</font>
+<h2 style="direction:ltr;"><font color="#280099">	print “Hello”</font>
+<h2 style="direction:ltr;"><font color="#280099"></font>
+<h2 style="direction:ltr;"><font color="#280099">print_hello()</font>
+<h2 style="direction:ltr;"><font color="#280099">print_hello()</font>
+</body>
+</html>
