@@ -1,4 +1,4 @@
-import dectools
+import dectools.dectools as dectools
 from print_buffer import print_buffer
 p = print_buffer()
 prnt = p.rint

@@ -1,5 +1,5 @@
-import dectools
-from dectools import pre, post
+import dectools.dectools as dectools
+from dectools.dectools import pre, post
 from print_buffer import print_buffer
 import types
 
@@ -11,25 +11,23 @@ printed = p.rinted
 ok = "self.name and self.price >= 0 and Item.tax_rate >= 0"   # Item only in globals(), locals()
 ok2 = "self.name and self.price >= 0 and self.tax_rate >= 0"  # does not need globals(), locals())
 
+@dectools.invariant
 class Item(object):
     tax_rate = 0.10
     
-    @post("3==3")
-    @post("self.price == self.price * 2 * 0.5")
-    @post("True")
-    @post(ok, globals(), locals())
+    @post("self.name and self.price >= 0 and Item.tax_rate >= 0", globals())
     def __init__(self, name, price):
         self.name = name
         self.price = price
         
-    @pre(ok, globals(), locals())
-    @post(ok2)
+    def _invariant(self):
+        assert self.name not in ("Swiss", "Cheddar")
+        assert self.price > 0
+        
     @pre("adjustment < 0")
     def adjust_price(self, adjustment):
         self.price += adjustment
         
-    @post(ok, globals(), locals())
-    @pre(ok2)
     def get_taxes(self):
         return self.price * Item.tax_rate
     

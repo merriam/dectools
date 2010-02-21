@@ -1,5 +1,5 @@
-import dectools
-from dectools import pre, post
+import dectools.dectools as dectools
+from dectools.dectools import pre, post
 from print_buffer import print_buffer
 import types
 
