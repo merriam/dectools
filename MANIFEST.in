@@ -1,4 +1,4 @@
 include *.txt
 recursive-include docs *.txt
-graft dectools
+recursive-include dectools *.py
 graft docs

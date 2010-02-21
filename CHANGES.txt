@@ -3,4 +3,6 @@ v0.1.1, 20 Feb 2010 -- Apparently distutils included no files.   Added
                        slides in the documentation directory.  Started 
                        a public repository at 
                        git://github.com/merriam/dectools.git
+v0.1.2, 20 Feb 2010 -- Making it work a bit more.  Now need to
+                       include dectools.dectools as dectools in the tests.
 
