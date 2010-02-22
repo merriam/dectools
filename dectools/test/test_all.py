@@ -15,7 +15,6 @@
 # To add tests, follow the boilerplate.  I thought of just doing a
 # quick generate on the fly, but it's better to avoid the metaprogramming.
 
-
 def test_call_before():
     import test_call_before
 
