@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='dectools',
-    version='0.1.2',
+    version='0.1.3',
     author='Charles Merriam',
     author_email='charles.merriam@gmail.com',
     packages=['dectools', 'dectools.test'],

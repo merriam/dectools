@@ -44,6 +44,11 @@ Contact
 You can contact the author, Charles Merriam, at charles.merriam@gmail.com. 
 Or visit http://charlesmerriam.com
 
+Repository
+==========
+
+The source and bugs repository is git://github.com/merriam/dectools
+
 Other Notes
 ===========
 This is a 'shared experiment' release.
