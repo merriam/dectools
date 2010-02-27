@@ -1,0 +1,107 @@
+=============================
+DecTools, A decorator toolkit
+=============================
+
+Overview
+========
+
+The dectools module overcomes some challenges in the Python
+decorators.  It provides a clear and convenient method for 
+writing your own decorators.  The dectools modules also provides
+a library of common decorations for logging and testing your code.
+The prebuilt libraries can be used with minimal understanding and
+provide immediate benefit to users.  The method for writing your
+own decorators requires more reading.
+
+Installation
+============
+
+Like all packages, installation can be harder.  If you do not use
+virtualenv, I strongly suggest you start.   Virtualenv uses a
+private directory of packages and binaries for each project making
+it easy to uninstall packages.  I recommend you use pip or 
+easy_install to your packages.
+
+You will need to install the dectools module and Michele Simonyti
+
+
+Linux
+-----
+
+On a Linux System:
+$ mkvirtualenv new_project
+$ workon new_project
+$ easy_install decorator dectools
+
+You should set your $PYTHONPATH to point at these new libaries as necessary.
+I am not quite sure what commmands are needed in bash, and your IDE will 
+require some other command anyway.
+
+Other Operating Systems
+-----------------------
+
+It should install nicely on other systems, though I have not even tried.
+
+Python version
+--------------
+
+I expect this package works on Python 2.6.x only.  I have not attempted to
+run in on Python 3.x.  The '@invariant' pre-built decorator is a class decorator
+which makes it unlikely to work on versions Python 2.5.x and before.   If people
+care, I can back port the package.
+
+Using the Prebuilt Decorators
+=============================
+
+You can use the pre-built decorators to handle these problems.
+*   For Debugging:
+**  @log()
+
+    Print a log all parameters passed, and the return value or exception.
+    
+    You can use the log decorator to print a message before and after each 
+    function call.   The basic output is one statement to standard output when
+    your function is called and one when your function returns.  There are also
+    parameters to change the output destination and a parameter to 
+    each before and after calling that take functions.  I may change this
+    API slightly to take a format string for before and after functions.
+    
+    Until I add examples, you should look at the test file, 
+    dectools/test/test_log.py, for an example.
+    
+    I will try to update the docstring from test_log and then figure out how
+    to have Sphinx import that docstring.
+    
+**  @pre() and @post() 
+
+    Assert an expression before or after a function is run.
+    
+    These decorators take an expression and execute either before, for @pre,
+    or after, for @post, your function.  You can use both @pre and @post to
+    decorate a single function.   Internally, this uses the Python eval() 
+    function, which creates an issue for locals and globals.
+    
+    If your expressions check only the parameters or variables referenced 
+    through the self parameter, you can use just function like:
+    
+    @post('self.total >= 0 and self.tax >= 0')
+    @pre('item and item.name and item.price >= 0')
+    def add_to_purchase(self, item):
+       ...
+       
+    If you have a pre or post condition that references other global or
+    local variable, you should pass the current globals and locals as
+    parameters, as in this example:
+    
+    @post('Database.get_item_by_name(name) > 0', globals(), locals())
+    def add_new_item_to_database(name, description, price)
+
+** @invariant
+
+   A class decorator to force calling the function self._invariant() after
+   the __init__() method and before and after each public method.  A public
+   method of a class is one that is not a @classmethod or @staticmethod and
+   does not start with an underscore.
+   
+Using the decorator constructors
+================================
