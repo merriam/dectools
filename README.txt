@@ -34,7 +34,8 @@ Thanks
 ======
 
 Thanks to Michele Simionato for exposing utility functions in 
-Decorator Decorator and to David Mertz for his excellent IBM
+Decorator Decorator.
+Thanks to David Mertz for his excellent IBM
 Developer Works article "Charming Python:  Decorators make
 magic easy", http://www.ibm.com/developerworks/linux/library/l-cpdecor.html
 
@@ -44,10 +45,14 @@ Contact
 You can contact the author, Charles Merriam, at charles.merriam@gmail.com. 
 Or visit http://charlesmerriam.com
 
-Repository
-==========
+Sources
+=======
 
 The source and bugs repository is git://github.com/merriam/dectools
+The package is also available from the cheeseshop, http://pypi.python.org/pypi/dectools
+The presentation from PyCon 2010, of decorators and introducing the library, is in the docs/ directory.
+The video from the PyCon 2010 presentation is available at http://blip.tv/file/3257278/
+
 
 Other Notes
 ===========
