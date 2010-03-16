@@ -1,0 +1,24 @@
+aw.. dectools documentation on Thu Mar  4 16:11:14 2010.
+
+DecTools, A decorator toolkit
+=============================
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+   intro
+   changes
+   library
+   makecall
+   
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+.. include ../docs/manual.txt

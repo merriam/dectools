@@ -20,6 +20,11 @@ import traceback
 #== Plumbing
 doc_new_warning = "(decorated by dectools.  see __decorators__ and __decorator_chain__)\n"
 
+def get_version():
+    """ Return the current version as a tuple of (major version, minor version, point release).
+        For example, version 0.1.4 would return (0, 1, 4) """
+    return (0, 1, 4)
+
 def _get_history_attributes(changed, model, explanations = None, chain = None):
     """ return tuple of new doc, chain, and explanations taking into account the
         current values in model, and maybe changed. """

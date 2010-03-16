@@ -21,41 +21,4 @@ signatures for decorated functions.  Typical usage often looks like this::
     def view_summary():
         ...
 
-This release has *@make_call_(once/before/after/instead)*.  It also has 
-commonly used decorators in this release, including:
-
-* *@pre*, *@post* for pre and post condition processing
-
-* *@log()* for logging function calls
-
-* *@invariant*, a class decorator, for contract programming
-
-Thanks
-======
-
-Thanks to Michele Simionato for exposing utility functions in 
-Decorator Decorator.
-Thanks to David Mertz for his excellent IBM
-Developer Works article "Charming Python:  Decorators make
-magic easy", http://www.ibm.com/developerworks/linux/library/l-cpdecor.html
-
-Contact
-=======
-
-You can contact the author, Charles Merriam, at charles.merriam@gmail.com. 
-Or visit http://charlesmerriam.com
-
-Sources
-=======
-
-The source and bugs repository is git://github.com/merriam/dectools
-The package is also available from the cheeseshop, http://pypi.python.org/pypi/dectools
-The presentation from PyCon 2010, of decorators and introducing the library, is in the docs/ directory.
-The video from the PyCon 2010 presentation is available at http://blip.tv/file/3257278/
-
-
-Other Notes
-===========
-This is a 'shared experiment' release.
-
-This package depends on "decorator", 3.1.2 or above, http://pypi.python.org/pypi/decorator/3.1.2
+You can find a manual in docs/dectools.pdf, or an html version in docs/manual/index.html.

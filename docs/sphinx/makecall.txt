@@ -1,0 +1,227 @@
+Using the Make_call_* Constructors
+==================================
+
+To use the library constructors, add this import line::
+
+    import dectools
+    
+Use a constructor as decorator on your function.  Your 
+function must have the correct function signature:  the first 
+argument must be "function" and the second and third arguments are probably
+"args" and "kwargs".   Put any additional arguments after these required arguments.
+
+TODO:  Make these arguments optional, because only @make_call_instead really needs them.
+
+For example::
+
+    @make_call_before
+    def my_new_call_before_decorator(function, args, kwargs, some_other_argument):
+         # do stuff
+         ....
+         
+    @my_new_call_before_decorator("foo")  # or (some_other_argument = "foo")
+    def my_newly_decorated_function(other_args):
+        pass
+        
+We will call "my_new_call_before_decorator" the decorator and 
+"my_newly_decorated_function" the decorated function.
+
+Quick Reference
+---------------
+
+===================        ==========================     ====================         
+Construtor                 Required Parameters            Used For                     
+===================        ==========================     ====================         
+@make_call_once            function                       registering with frameworks, global resource creation
+@make_call_before          funciton, args, kwargs         requiring login, lazy instantiation
+@make_call_if              function, args, kwargs         checking priviledges, skipping if overloaded
+@make_call_after           function, args, kwargs         converting return values to exceptions, redrawing the screen
+@make_call_instead         function, args, kwargs         everything else.  logs, caches, locking, resource handling.
+===================        ==========================     ====================         
+
+
+@make_call_once
+---------------
+   Requires:  ``(function, ...)``
+   
+   Call the decorator once when the decorator is applied, but does not 
+   affect the decorated function.
+   
+   Used for registering the function with frameworks, global resource
+   creation, or enforcing proprietary licensing restrictions.
+   
+@make_call_before
+-----------------
+    Requires: ``(function, args, kwargs, ...)``
+    
+    Call the decorator before the decorated function, then call the decorated function.  
+    If the decorator throws an exception, then the decorated function is not called.
+    
+    Used for requiring users to be logged in first, lazy instantiation of 
+    resources, and setting preconditions.  
+
+@make_call_after
+----------------
+    Requires: ``(function, args, kwargs, ...)``
+    
+    Call decorator after the decorated function.  The decorator's return value is
+    returned.
+    
+    Used for converting errors from return values into exceptions, double checking
+    that resources were released, and redrawing of the screen.
+
+@make_call_if
+-------------
+    Requires: ``(function, args, kwargs, ...)``
+    
+    Call decorator first.  If decorator returns a True value, then call the decorated
+    function.
+    
+    Used for checking authorization, skipping decluttering during peak times, and enforcing 
+    some proprietary licensing.  
+
+@make_call_instead
+------------------
+    Requires: ``(function, args, kwargs, ...)``
+    
+    Call the decorator.  Do not call the decorated function.  The decorator will usually 
+    call the function with the statement ``return_value = function(*args, **kwargs)``.
+    
+    Used for everything, including logging, caching, acquiring and releasing locks, 
+    acquiring and releasing other resources, comparing results between an optimized
+    algorithm and a slow but reliable one, and more.
+    
+How the Constructors Really Work
+================================
+ 
+TODO:  Make the constructors really work this way instead of with a couple extra 
+levels of functino calls.  The concept is about right.
+
+This follows through one example to show how it works.  Walking through it might 
+demystify decorators, might make you think I am an idiot, and might put you to
+sleep.
+
+The example
+-----------
+
+::
+
+    @make_call_instead   # Step 1
+    def notice_me(function, args, kwargs, message = "I see you"):
+        print message + ": " + function.__name__
+        return function(args, kwargs)
+    
+    @notice_me("Watching you")  # Step 2, Parts A and B.
+    def hello(name):  
+        print "Hello", name
+    
+    hello("Charles")  # Step 3.
+
+The example (unwrapped)
+-----------------------
+
+This is the same example, except we do some extra assignements to 
+temporary or differently-named variables.  It also moves the ``@``
+operation to after the ``def`` statement, which is where it actually
+occurs.
+
+::
+
+    def notice_me(function, args, kwargs, message = "I see you"):
+        print message + ": " + function.__name__
+        return function(args, kwargs)
+    widget = make_call_instead(notice_me)  # Step 1
+    notice_me = widget
+    
+    
+    def hello(name):  
+        print "Hello", name
+    gizmo = widget("Watching you")  # Step 2 Part A
+    hello_out = gizmo(hello)        # Step 2 Part B
+    hello = hello_out
+    
+    hello("Charles")                # Step 3
+
+The explanation
+---------------
+
+Step 1
+++++++
+
+The constructor, @make_call_instead, is a concrete decorator because it
+takes one function as input.  The function passed in, e.g., notice_me():
+
+- has "function, args, and kwargs" as first three arguments.  In the current
+  version, this is asserted.   In future versions, it might not be required.
+  
+- has zero or more additional arguments.  The additional arguments may or
+  may not have default values.
+
+The return value, named widget here, has some properties:
+
+- It has a signature of only the additional parameters.  For this case,
+  it has a signature of taking only the message argument.
+- It has the __name__ metadata of notice_me().
+- It has decorator data describing that "the function signature was changed" and 
+  mentions "make_call_instead()" as the culprit.
+- It can be used in step 2.
+
+Step 2, Part A
+++++++++++++++
+
+Step 2 is divided into two parts, because two separate operations occur in the line 
+@notice_me("Watching you").   notice_me("Watching you") resolves into an intermediate
+value and the '@' operation is then applied.
+
+For Part A., gizmo = widget("Watching you") takes an argument.
+
+- The argument corresponds to the additional arguments after "function, args, kwargs".
+- The signature of widget is "def widget(message):" and widget("watching you") is 
+  equivalent to ``widget(message = "watching you")``.  Your IDE will help get the 
+  arguments correct.
+- Widget is a complex decorator, taking arguments and yielding a decorator.
+- dectools makes complex decorators out of functions.  "Function" is used interchangably with 
+  "method".  
+- The output, gizmo(), is a concrete decorator for use in Step 2, Part B.  gizmo() takes
+  one argument, a callable function, and returns a callable function with the additional
+  functionality of notice_me(). This makes gizmo() a concrete decorator.
+- When you use the decorator again, like `@notice_me("Still watching")`, or, 
+  equivalently, `gizmo_2 = widget("Still_watching")` both gizmo and gizmo_2 will
+  have the same __code__ attribute but different __closure__ attributes.  If that 
+  made no sense, don't worry.  There will not be a quiz.  Just recognize that you
+  will use notice_me with different input parameters.
+- the output, gizmo, is used in Step 2, Part B.
+
+Step 2, Part B
+++++++++++++++
+
+This line, "hello_out = gizmo(hello)" decorates hello. 
+
+- gizmo() takes exactly one argument, hello, and returns the modified function.  For
+  the example, we call it hello_out for clarity.  Right after this line, hello_out is
+  assigned to hello.
+- hello_out has the same signature and ``__name__`` as hello.  These are not related to
+  the signature or name of notice_me or gizmo.  That is, using the decorator does
+  not change the signature:  one of the magic points of dectools.
+- hello is expected to be a function.  The library might support hello being a 
+  class in the future if I can make a case for it being helpful.  It works and 
+  is helpful for @make_call_once().
+- hello_out does get additional metadata to record that it was decorated.
+
+Step 3
+++++++
+When the line hello("charles") is called these things happen:
+
+1.  hello("charles") is called.  When it was decorated, the actual code for hello
+    was changed to call a dectools function.  Let's call this function "call_through()" 
+    for this example.  
+2.  "call_through()" then calls notice_me() with the original hello function and
+    additonal decorator parameters.  In this case, it's called::
+
+        notice_me(function= hello, args = ("charles"), kwargs = {}, message = "Watching you")
+   
+3.  notice_me() then prints "Watching you: hello", then calls hello.  I wonder if anyone 
+    reads this documentation?  Email me if you do.
+4.  The return value of hello() is returned to notice_me() which is returned to 
+    call_through() which is returned to the main program, where it is ignored.
+

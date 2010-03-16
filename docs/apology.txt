@@ -1,8 +1,0 @@
-Apology
-=======
-
-This package was released as a "shared experiment".  I expect the API
-to be correct, the unit tests to be reasonable samples, and the code
-to disposable and smelling of elderberries.
-
-Documentation will come shortly.

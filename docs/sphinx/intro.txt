@@ -1,0 +1,86 @@
+Introduction
+============
+
+The dectools module overcomes some challenges in the Python
+decorators.  It provides a clear and convenient method for 
+writing your own decorators.  The dectools modules also provides
+a library of common decorations for logging and testing your code.
+
+The prebuilt libraries can be used with minimal understanding and
+provide immediate benefit to users.  The constructors for writing
+your own decorators require following a convention for naming the
+required arguments of your decorator.   In all cases, care is taken
+to provide correct function signatures, metadata, and record when
+decorators are applied in the function metadata.
+
+The support for class decoration is still coming.
+
+
+Prebuilt Decorators (the library)
++++++++++++++++++++++++++++++++++
+
+Prebuilt decorators can be of immediate benefit to users and can
+be used without a good understanding of decorators.  These are
+used for common problems such as caching, logging, and programming
+with invariants or pre-conditions and post-conditions.
+
+Make_call Decorators (the constructors)
++++++++++++++++++++++++++++++++++++++++
+
+There are five special constructors that allow users to make their
+own decorators that are called before, after, if (conditionally), 
+instead, or once during declaration of another function.  These provide
+for most use cases of writing custom decorators.  Using these constructors
+removes the boilerplate or copy-and-paste code associated with writing your
+own decorators, while also handling the function signatures, the metadata, 
+and a history of which functions decorate others.
+
+I Don't Read Documentation
+++++++++++++++++++++++++++
+
+Typical usage looks like this::
+
+    from dectools import *   # <-- Don't do this
+
+    @make_call_once
+    def register_callback(function):
+          gui.callback_create(function.__name__, function)
+
+    @make_call_before
+    def require_login(function, args, kwargs, page_name):
+         while not current_user_id():
+            ...
+
+    @log()
+    @register()
+    @require_login("Summary of Items")
+    def view_summary():
+        ...
+
+Thanks
+------
+
+Thanks to Michele Simionato for exposing utility functions in 
+Decorator Decorator.
+Thanks to David Mertz for his excellent IBM
+Developer Works article "Charming Python:  Decorators make
+magic easy", http://www.ibm.com/developerworks/linux/library/l-cpdecor.html
+
+Supported Versions
+------------------
+
+Currently, only version Python 2.6.x is guaranteed to work.
+
+Contact
+-------
+
+You can contact the author, Charles Merriam, at charles.merriam@gmail.com. 
+
+Sources
+-------
+
+- The source and bugs repository is git://github.com/merriam/dectools
+- The package is also available from the cheeseshop, http://pypi.python.org/pypi/dectools
+- The presentation from PyCon 2010, of decorators and introducing the library, is in the docs/ directory.
+- The video from the PyCon 2010 presentation is available at http://blip.tv/file/3257278/
+

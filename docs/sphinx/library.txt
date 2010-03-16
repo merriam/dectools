@@ -1,0 +1,81 @@
+Using the Prebuilt Decorators
+=============================
+
+To use the library decorators, add this import line:
+
+    import dectools
+
+Debugging Decorators
+--------------------
+
+@log()
+++++++
+
+Print a log all parameters passed to the function, and the return value or exception.
+    
+You can use the log decorator to print a message before and after each 
+function call.   The basic output is one statement to standard output when
+your function is called and one when your function returns.  There are also
+parameters to change the output destination and a parameter to 
+each before and after calling that take functions.  I may change this
+API slightly to take a format string for before and after functions.
+    
+**Recipe:  Basic Usage**
+
+*Code*::
+
+    from dectools import log
+
+    @log
+    def add_two(first, second):
+        return first + second
+
+    total = add_two(5, second=3)
+
+and
+*Output*::
+
+   >add_two(first=5, second=3)
+   <add_two. return value: 8
+
+You can find additional examples in the test case: *test/test_log.py*
+    
+@pre and @post
+++++++++++++++
+
+Assert an expression is true before or after the function is executed.
+    
+These decorators take an expression and execute either before, for @pre,
+or after, for @post, your function.  You can use both @pre and @post to
+decorate a single function.   Internally, this uses the Python eval() 
+function, which creates an issue for locals and globals.
+    
+If your expressions check only the parameters or variables referenced 
+through the self parameter, you can use just function like::
+
+    from dectools import pre, post
+    
+    @post('self.total >= 0 and self.tax >= 0')
+    @pre('item and item.name and item.price >= 0')
+    def add_to_purchase(self, item):
+        do_something() 
+
+If you have a pre or post condition that references other global or
+local variable, you should pass the current globals and locals as
+parameters, as in this example::
+
+    @post('Database.get_item_by_name(name) > 0', globals(), locals())
+    def add_new_item_to_database(name, description, price):
+        pass
+
+
+@invariant
+++++++++++
+
+A class decorator to force calling the function self._invariant() after
+the __init__() method and before and after each public method.  A public
+method of a class is one that is not a @classmethod or @staticmethod and
+does not start with an underscore.  A public method takes 'self' as its 
+first parameter.
+   
+

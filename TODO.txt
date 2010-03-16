@@ -1,5 +1,16 @@
-Update PyCon web page with the information.
-Write a simi-reasonable project page or pick one from elsewhere.
-Look into making dectools a class (probably simplier)
-Change log syntax to just take a format string
+There are many more updates for this library.  In order of the
+value/work tradeoff:
 
+- Add a version() function to return a triple of major, minor, point release
+- Add some fun class decorators like:
+  a.  transmogrify (modify entire dictionary for renaming or adding functions),
+  b.  warn_pep_8 (warn on pep 8 calling mistakes instead of failing), 
+  c.  workflow (enforce a workflow and cleanup system).
+- Add much log function usage
+- Clean up packaging and code organization.  No more "dectools.dectools"
+- Compile and run on Python 3.1
+- Add basic routines for caches and locks
+- Write a simi-reasonable project page or pick one from elsewhere.
+- Update documentation on with non-constructors (@call_instead()), and lots of
+  "how do I do this" examples
+  
