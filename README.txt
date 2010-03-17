@@ -21,4 +21,4 @@ signatures for decorated functions.  Typical usage often looks like this::
     def view_summary():
         ...
 
-You can find a manual in docs/dectools.pdf, or an html version in docs/manual/index.html.
+You can find manuals in docs/index.html. 

@@ -1,4 +1,3 @@
-include *.txt
-recursive-include docs *.txt
-recursive-include dectools *.py
+include make_pkg.sh CHANGES.txt LICENSE.txt TODO.txt MANIFEST.in
+graft dectools 
 graft docs

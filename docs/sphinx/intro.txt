@@ -58,7 +58,7 @@ Typical usage looks like this::
         ...
 
 Thanks
-------
+++++++
 
 Thanks to Michele Simionato for exposing utility functions in 
 Decorator Decorator.
@@ -67,17 +67,17 @@ Developer Works article "Charming Python:  Decorators make
 magic easy", http://www.ibm.com/developerworks/linux/library/l-cpdecor.html
 
 Supported Versions
-------------------
+++++++++++++++++++
 
 Currently, only version Python 2.6.x is guaranteed to work.
 
 Contact
--------
++++++++
 
-You can contact the author, Charles Merriam, at charles.merriam@gmail.com. 
+You can contact the author, Charles Merriam, at charles.merriam@gmail.com.
 
 Sources
--------
++++++++
 
 - The source and bugs repository is git://github.com/merriam/dectools
 - The package is also available from the cheeseshop, http://pypi.python.org/pypi/dectools

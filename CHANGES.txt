@@ -1,10 +1,14 @@
-v0.1.0, 18 Feb 2010 -- Initial escape into the public.
-v0.1.1, 20 Feb 2010 -- Apparently distutils included no files.   Added
-                       slides in the documentation directory.  Started 
-                       a public repository at 
-                       git://github.com/merriam/dectools.git
-v0.1.2, 20 Feb 2010 -- Making it work a bit more.  Now need to
-                       include dectools.dectools as dectools in the tests.
-v0.1.3, 27 Feb 2010 -- Tests work as both nosetests and Unittest.  94% coverage.
-                       Started a manual in docs/manual.txt.
+::
 
+ v0.1.0, 18 Feb 2010 -- Initial escape into the public.
+ v0.1.1, 20 Feb 2010 -- Apparently distutils included no files.   Added
+                        slides in the documentation directory.  Started 
+                        a public repository at 
+                        git://github.com/merriam/dectools.git
+ v0.1.2, 20 Feb 2010 -- Making it work a bit more.  Now need to
+                        include dectools.dectools as dectools in the tests.
+ v0.1.3, 27 Feb 2010 -- Tests work as both nosetests and Unittest.  94% coverage.
+                        Started a manual in docs/manual.txt.
+ v0.1.4, 17 Mar 2010 -- Documentation and packaging update.
+                        Include a Sphinx manual.  Add a get_version() function.  Add
+                        a make_pkg script.
